@@ -10,10 +10,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/urfave/cli"
-	"golang.org/x/crypto/ssh/terminal"
-	"golang.org/x/net/context"
-	"gopkg.in/olivere/elastic.v5"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -21,6 +17,11 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/net/context"
+	"gopkg.in/olivere/elastic.v5"
 )
 
 //
@@ -90,7 +91,7 @@ func NewTail(configuration *Configuration) *Tail {
 	if cert != "" && key != "" {
 		cert, err := tls.LoadX509KeyPair(cert, key)
 		if err != nil {
-		    Error.Fatalf("Bad certificate and/or key: %s", err)
+			Error.Fatalf("Bad certificate and/or key: %s", err)
 		}
 		tlsConfig := &tls.Config{
 			Certificates: []tls.Certificate{cert},
@@ -152,9 +153,13 @@ func (tail *Tail) selectIndices(configuration *Configuration) {
 		tail.indices = findIndicesForDateRange(indices, configuration.SearchTarget.IndexPattern, startDate, endDate)
 
 	} else {
-		index := findLastIndex(indices, configuration.SearchTarget.IndexPattern)
-		result := [...]string{index}
-		tail.indices = result[:]
+		if configuration.SearchTarget.IndexPattern == "*" {
+			tail.indices = indices
+		} else {
+			index := findLastIndex(indices, configuration.SearchTarget.IndexPattern)
+			result := [...]string{index}
+			tail.indices = result[:]
+		}
 	}
 	Info.Printf("Using indices: %s", tail.indices)
 }
