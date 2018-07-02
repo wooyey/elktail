@@ -12,6 +12,14 @@ Elktail is a command line utility to query and tail Elasticsearch logs. Even tho
 
 For additional information and usage examples take a look at this post: [Elktail - Command Line Tool for Tailing and Querying ELK Logs](http://knes1.github.io/blog/2016/2016-03-06-elktail-command-line-tool-for-tailing-and-querying-ELK-logs.html)
 
+## Docker useage
+
+I'm working with a Docker swarm with elastic search inside the swarm, so am able to use elktail like:
+
+```
+docker run --rm -it --net elasticsearch_esnetwork svendowideit/elktail --url http://elasticsearch:9200 --raw
+```
+
 ## Feature Requests
 
 Please feel free to use the [Issue Tracker](https://github.com/gabe-sorensen/elktail/issues) if you have any feature ideas or requests (and, of course, to report bugs).
