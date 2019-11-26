@@ -160,7 +160,7 @@ func (tail *Tail) selectIndices(configuration *Configuration) {
 }
 
 // Start the tailer
-func (tail *Tail) Start(follow bool, initialEntries int) {
+func (tail *Tail) Start(follow bool, initialEntries int, ctx cli.Context) {
 	result, err := tail.initialSearch(initialEntries)
 	if err != nil {
 		Error.Fatalln("Error in executing search query.", err)
@@ -193,6 +193,11 @@ func (tail *Tail) Start(follow bool, initialEntries int) {
 		} else if delay <= 2000*time.Millisecond {
 			delay = delay + 500*time.Millisecond
 		}
+
+                select {
+                    case <-ctx.Done():
+                        return
+                }
 	}
 }
 
@@ -405,7 +410,7 @@ func main() {
 	app.Version = VERSION
 	app.ArgsUsage = "[query-string]\n   Options marked with (*) are saved between invocations of the command. Each time you specify an option marked with (*) previously stored settings are erased."
 	app.Flags = config.Flags()
-	app.Action = func(c *cli.Context) {
+	app.Action = func(c *cli.Context) error {
 
 		if c.IsSet("help") {
 			cli.ShowAppHelp(c)
@@ -484,7 +489,7 @@ func main() {
 			if args.Present() {
 				if len(config.QueryDefinition.Terms) > 1 {
 					config.QueryDefinition.Terms = append(config.QueryDefinition.Terms, "AND")
-					config.QueryDefinition.Terms = append(config.QueryDefinition.Terms, args...)
+					config.QueryDefinition.Terms = append(config.QueryDefinition.Terms, args.Slice()...)
 				} else {
 					config.QueryDefinition.Terms = []string{args.First()}
 					config.QueryDefinition.Terms = append(config.QueryDefinition.Terms, args.Tail()...)
@@ -496,7 +501,8 @@ func main() {
 		//If we don't exit here we can save the defaults
 		configToSave.SaveDefault()
 
-		tail.Start(!config.IsListOnly(), config.InitialEntries)
+		tail.Start(!config.IsListOnly(), config.InitialEntries, *c)
+                return nil
 	}
 
 	app.Run(os.Args)
