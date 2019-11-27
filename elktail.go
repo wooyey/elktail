@@ -171,13 +171,7 @@ func (tail *Tail) Start(follow bool, initialEntries int, ctx cli.Context) {
 		time.Sleep(delay)
 		if tail.lastTimeStamp != "" {
 			//we can execute follow up timestamp filtered query only if we fetched at least 1 result in initial query
-			result, err = tail.client.Search().
-				Index(tail.indices...).
-				Sort(tail.queryDefinition.TimestampField, false).
-				From(0).
-				Size(9000). //TODO: needs rewrite this using scrolling, as this implementation may loose entries if there's more than 9K entries per sleep period
-				Query(tail.buildTimestampFilteredQuery()).
-				Do(context.Background())
+			result, err = tail.followUpSearch(false)
 		} else {
 			//if lastTimeStamp is not defined we have to repeat the initial search until we get at least 1 result
 			result, err = tail.initialSearch(initialEntries)
@@ -199,6 +193,18 @@ func (tail *Tail) Start(follow bool, initialEntries int, ctx cli.Context) {
                         return
                 }
 	}
+        // Returing all records when no follow is set
+        lastTimeStamp := tail.lastTimeStamp
+        for (tail.lastTimeStamp != "") {
+			result, err = tail.followUpSearch(true)
+                        tail.processResults(result)
+
+                        if (lastTimeStamp == tail.lastTimeStamp) {
+                            return
+                        }
+
+                        lastTimeStamp = tail.lastTimeStamp
+        }
 }
 
 // Initial search needs to be run until we get at least one result
@@ -209,6 +215,15 @@ func (tail *Tail) initialSearch(initialEntries int) (*elastic.SearchResult, erro
 		Sort(tail.queryDefinition.TimestampField, tail.order).
 		Query(tail.buildSearchQuery()).
 		From(0).Size(initialEntries).
+		Do(context.Background())
+}
+
+func (tail *Tail) followUpSearch(order bool) (*elastic.SearchResult, error) {
+	return tail.client.Search().
+		Index(tail.indices...).
+		Sort(tail.queryDefinition.TimestampField, order).
+		Query(tail.buildTimestampFilteredQuery()).
+		From(0).Size(9000).
 		Do(context.Background())
 }
 
