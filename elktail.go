@@ -10,10 +10,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/urfave/cli"
-	"golang.org/x/crypto/ssh/terminal"
-	"golang.org/x/net/context"
-	"gopkg.in/olivere/elastic.v5"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -21,6 +17,11 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/net/context"
+	"gopkg.in/olivere/elastic.v5"
 )
 
 //
@@ -90,7 +91,7 @@ func NewTail(configuration *Configuration) *Tail {
 	if cert != "" && key != "" {
 		cert, err := tls.LoadX509KeyPair(cert, key)
 		if err != nil {
-		    Error.Fatalf("Bad certificate and/or key: %s", err)
+			Error.Fatalf("Bad certificate and/or key: %s", err)
 		}
 		tlsConfig := &tls.Config{
 			Certificates: []tls.Certificate{cert},
@@ -168,7 +169,6 @@ func (tail *Tail) Start(follow bool, initialEntries int, ctx cli.Context) {
 	tail.processResults(result)
 	delay := 500 * time.Millisecond
 	for follow {
-		time.Sleep(delay)
 		if tail.lastTimeStamp != "" {
 			//we can execute follow up timestamp filtered query only if we fetched at least 1 result in initial query
 			result, err = tail.followUpSearch(false)
@@ -188,23 +188,31 @@ func (tail *Tail) Start(follow bool, initialEntries int, ctx cli.Context) {
 			delay = delay + 500*time.Millisecond
 		}
 
-                select {
-                    case <-ctx.Done():
-                        return
-                }
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			time.Sleep(delay)
+		}
 	}
-        // Returing all records when no follow is set
-        lastTimeStamp := tail.lastTimeStamp
-        for (tail.lastTimeStamp != "") {
-			result, err = tail.followUpSearch(true)
-                        tail.processResults(result)
 
-                        if (lastTimeStamp == tail.lastTimeStamp) {
-                            return
-                        }
+	// Returning all records when no follow is set
+	lastTimeStamp := tail.lastTimeStamp
+	for tail.lastTimeStamp != "" {
+		result, err = tail.followUpSearch(true)
+		tail.processResults(result)
 
-                        lastTimeStamp = tail.lastTimeStamp
-        }
+		if lastTimeStamp == tail.lastTimeStamp {
+			return
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			lastTimeStamp = tail.lastTimeStamp
+		}
+	}
 }
 
 // Initial search needs to be run until we get at least one result
@@ -517,7 +525,7 @@ func main() {
 		configToSave.SaveDefault()
 
 		tail.Start(!config.IsListOnly(), config.InitialEntries, *c)
-                return nil
+		return nil
 	}
 
 	app.Run(os.Args)
