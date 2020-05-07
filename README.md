@@ -4,6 +4,8 @@ THIS IS A FORK OF:
 
 - https://github.com/svendowideit/elktail
 
+With some minor adjustments.
+
 Elktail is a command line utility to query and tail Elasticsearch logs. Even though it's powerful, using Kibana's web interface to search and analyze the logs is not always practical. Sometimes you just wish to `tail -f` the logs that you normally view in Kibana to see what's happening right now. Elktail allows you to do just that, and more. Tail the logs. Search for errors and specific events on command line. Pipe the search results to any of the standard unix tools.  Use it in scripts. Redirect the output to a file to effectively download a log from es / Kibana etc...
 
 For additional information and usage examples take a look at this post: [Elktail - Command Line Tool for Tailing and Querying ELK Logs](http://knes1.github.io/blog/2016/2016-03-06-elktail-command-line-tool-for-tailing-and-querying-ELK-logs.html)
@@ -26,7 +28,8 @@ Elktail major versions follow ElasticSearch versions. Here's the table indicatin
 
 | Elktail       | ElasticSearch |
 | ------------- | ------------- |
-| v5.x.x        | >= 5.x.x      |
+| v7.x.x        | >= 7.x.x      |
+| v5.x.x        | 5.x.x, 6.x.x  |
 | v1.x.x        | 1.x.x, 2.x.x  |
 
 # Installation

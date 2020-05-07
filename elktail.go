@@ -10,6 +10,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/urfave/cli"
+	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/net/context"
+	"gopkg.in/olivere/elastic.v7"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -295,13 +299,13 @@ func drainOldEntries(entries *[]displayedEntry, cutOffTimestamp string) {
 
 func (tail *Tail) processHit(hit *elastic.SearchHit) map[string]interface{} {
 	var entry map[string]interface{}
-	err := json.Unmarshal(*hit.Source, &entry)
+	err := json.Unmarshal(hit.Source, &entry)
 	if err != nil {
 		Error.Fatalln("Failed parsing ElasticSearch response.", err)
 	}
 
 	if tail.queryDefinition.Raw {
-		fmt.Println(string(*hit.Source))
+		fmt.Println(string(hit.Source))
 	} else {
 		tail.printResult(entry)
 	}
