@@ -5,4 +5,4 @@
  */
 package main
 
-const VERSION = "7.1.8"
+const VERSION = "7.1.9"
