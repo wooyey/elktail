@@ -1,4 +1,4 @@
-FROM golang:alpine as build
+FROM golang:1.13-alpine3.12 as build
 
 RUN apk --no-cache add git
 
@@ -8,7 +8,7 @@ COPY . .
 RUN go get -d -v ./...
 RUN go install -v ./...
 
-FROM alpine
+FROM alpine:3.12
 
 COPY --from=build /go/bin/app /app
 
